@@ -1,1 +1,2 @@
 from .logging import StructLoggingMiddleware as StructLoggingMiddleware
+from .db import DBSessionMiddleware as DBSessionMiddleware

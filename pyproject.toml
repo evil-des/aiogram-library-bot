@@ -67,6 +67,9 @@ orjson = "3.9.7"
 structlog = "^23.1.0"
 tenacity = "8.2.3"
 pytz = "^2023.3.post1"
+sqlalchemy = "^2.0.23"
+sqlmodel = "^0.0.14"
+aiogram-dialog = "^2.0.0"
 
 [tool.poetry.group.dev]
 optional = true

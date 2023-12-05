@@ -1,7 +1,7 @@
 import asyncio
 
 import aiojobs
-import asyncpg as asyncpg
+# import asyncpg as asyncpg
 import orjson
 import redis
 import structlog
@@ -10,33 +10,23 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+from aiogram_dialog import setup_dialogs
 from aiohttp import web
 from redis.asyncio import Redis
 
-from aiogram_bot_template import handlers, utils, web_handlers
-from aiogram_bot_template.data import config
-from aiogram_bot_template.middlewares import StructLoggingMiddleware
+from app import handlers, utils, web_handlers
+from app.data import config
+from app.middlewares import StructLoggingMiddleware, DBSessionMiddleware
+
+from app.db import init_db, async_session
+from app.models import User, Book, Genre, Author
 
 
 async def create_db_connections(dp: Dispatcher) -> None:
     logger: structlog.typing.FilteringBoundLogger = dp["business_logger"]
 
-    logger.debug("Connecting to PostgreSQL", db="main")
-    try:
-        db_pool = await utils.connect_to_services.wait_postgres(
-            logger=dp["db_logger"],
-            host=config.PG_HOST,
-            port=config.PG_PORT,
-            user=config.PG_USER,
-            password=config.PG_PASSWORD,
-            database=config.PG_DATABASE,
-        )
-    except tenacity.RetryError:
-        logger.error("Failed to connect to PostgreSQL", db="main")
-        exit(1)
-    else:
-        logger.debug("Succesfully connected to PostgreSQL", db="main")
-    dp["db_pool"] = db_pool
+    logger.debug("DataBase Initialization")
+    await init_db()
 
     if config.USE_CACHE:
         logger.debug("Connecting to Redis")
@@ -78,9 +68,6 @@ async def close_db_connections(dp: Dispatcher) -> None:
     if "temp_bot_local_session" in dp.workflow_data:
         temp_bot_local_session: AiohttpSession = dp["temp_bot_local_session"]
         await temp_bot_local_session.close()
-    if "db_pool" in dp.workflow_data:
-        db_pool: asyncpg.Pool = dp["db_pool"]
-        await db_pool.close()
     if "cache_pool" in dp.workflow_data:
         cache_pool: redis.asyncio.Redis = dp["cache_pool"]  # type: ignore[type-arg]
         await cache_pool.close()
@@ -88,10 +75,12 @@ async def close_db_connections(dp: Dispatcher) -> None:
 
 def setup_handlers(dp: Dispatcher) -> None:
     dp.include_router(handlers.user.prepare_router())
+    # setup_dialogs(dp)  # aiogram-dialog init
 
 
 def setup_middlewares(dp: Dispatcher) -> None:
     dp.update.outer_middleware(StructLoggingMiddleware(logger=dp["aiogram_logger"]))
+    dp.update.middleware(DBSessionMiddleware(session_pool=async_session))
 
 
 def setup_logging(dp: Dispatcher) -> None:
@@ -221,7 +210,7 @@ def main() -> None:
                 port=config.FSM_PORT,
                 db=0,
             ),
-            key_builder=DefaultKeyBuilder(with_bot_id=True),
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
         )
     )
     dp["aiogram_session_logger"] = aiogram_session_logger
