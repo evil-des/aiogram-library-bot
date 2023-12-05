@@ -23,21 +23,21 @@ class BaseModel(pydantic.BaseModel):
         json_encoders = {uuid.UUID: lambda x: f"{x}"}
 
 
-class UserBase(SQLModel):
+class UserBase(SQLModel, BaseModel):
     full_name: str
     username: typing.Optional[str]
 
 
-class BookBase(SQLModel):
+class BookBase(SQLModel, BaseModel):
     name: str
     author: str
     desc: str = Field(default="Описание книги не указано")
 
 
-class GenreBase(SQLModel):
+class GenreBase(SQLModel, BaseModel):
     name: str
     desc: str = Field(default="Описание жанра отсутствует")
 
 
-class AuthorBase(SQLModel):
+class AuthorBase(SQLModel, BaseModel):
     full_name: str  # потому что некоторые авторы могут иметь отчество, а другие нет

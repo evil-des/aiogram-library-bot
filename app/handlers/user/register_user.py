@@ -20,8 +20,8 @@ async def register_user(message: types.Message,
         await db_session.commit()
         await db_session.refresh(user)
     except IntegrityError:
-        await update_user(message, db_session)
         await db_session.rollback()
+        await update_user(message, db_session)
     except PendingRollbackError:
         await db_session.rollback()
 
@@ -30,9 +30,13 @@ async def register_user(message: types.Message,
 
 async def update_user(message: types.Message,
                       db_session: AsyncSession) -> User:
-    # result = await db_session.execute(select(User).where(User.chat_id == message.chat.id))
-    user = db_session.query(User).filter(User.chat_id == message.chat.id).first()
-    if user:
+    result = await db_session.execute(
+        select(User).where(User.chat_id == message.chat.id)
+    )
+    user: User = result.scalar()
+
+    if user.username != message.chat.username or \
+            user.full_name != message.chat.full_name:
         user.username = validate_username(message.chat.username)
         user.full_name = message.chat.full_name
 

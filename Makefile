@@ -1,4 +1,4 @@
-PROJECT_DIR=aiogram_bot_template
+PROJECT_DIR=app
 
 all: lint
 

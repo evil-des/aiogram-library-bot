@@ -1,9 +1,9 @@
-version: '3.7'
+version: '1.0'
 
 services:
   app:
-    container_name: flexvpn_api
-    image: flexvpn_api
+    container_name: library-bot
+    image: aiogram-library-bot
     env_file:
       - .env
     build:
@@ -17,12 +17,12 @@ services:
       - app_db
 
   app_db:
-    container_name: flexvpn_db
-    hostname: flexvpn_db
+    container_name: library-bot-postgresql
+    hostname: postgres
     image: library/postgres:14.1
     environment:
-      - POSTGRES_USER=flex
-      - POSTGRES_PASSWORD=12345
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
       - POSTGRES_DB=app
     volumes:
       - app_pg_data:/var/lib/postgresql/data
@@ -32,12 +32,12 @@ services:
   app_redis:
     image: redis:6.2-alpine
     hostname: redis
-    container_name: flexvpn_redis
+    container_name: library-bot-redis
     command:
       - 'redis-server'
       - '--requirepass myStrongPassword'
     ports:
-      - 6379:6379
+      - "6379:6379"
 
 volumes:
   app_pg_data:
@@ -46,4 +46,4 @@ volumes:
 networks:
   default:
     external: true
-    name: flexvpn_main
+    name: app_main
