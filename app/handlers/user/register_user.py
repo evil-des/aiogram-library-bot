@@ -29,11 +29,12 @@ async def register_user(message: types.Message,
 
 
 async def update_user(message: types.Message,
-                      db_session: AsyncSession) -> User:
-    result = await db_session.execute(
-        select(User).where(User.chat_id == message.chat.id)
-    )
-    user: User = result.scalar()
+                      db_session: AsyncSession, user: User = None) -> User:
+    if not user:
+        result = await db_session.execute(
+            select(User).where(User.chat_id == message.chat.id)
+        )
+        user: User = result.scalar()
 
     if user.username != message.chat.username or \
             user.full_name != message.chat.full_name:

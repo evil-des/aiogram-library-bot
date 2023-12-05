@@ -11,14 +11,22 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram_dialog import setup_dialogs
+from aiogram_dialog.setup import DialogRegistry
 from aiohttp import web
 from redis.asyncio import Redis
 
 from app import handlers, utils, web_handlers
 from app.data import config, genres
-from app.middlewares import StructLoggingMiddleware, DBSessionMiddleware
+from app.middlewares import (
+    StructLoggingMiddleware,
+    DBSessionMiddleware,
+    UserObjectMiddleware
+)
 
 from app.db import init_db, async_session
+from app import dialogs
+
+# DO NOT DELETE THIS LINE - it's needed for creating tables in DB
 from app.models import User, Book, Genre, Author
 
 
@@ -75,14 +83,28 @@ async def close_db_connections(dp: Dispatcher) -> None:
         await cache_pool.close()
 
 
+def register_dialogs(dp: Dispatcher):
+    all_dialogs = [
+        dialogs.start_message.dialog,
+        dialogs.add_books.dialog,
+    ]
+    for dialog in all_dialogs:
+        dp.include_router(dialog)
+
+    setup_dialogs(dp)  # aiogram-dialog init
+
+
 def setup_handlers(dp: Dispatcher) -> None:
     dp.include_router(handlers.user.prepare_router())
-    # setup_dialogs(dp)  # aiogram-dialog init
+    dp.include_router(handlers.book.prepare_router())
+
+    register_dialogs(dp)
 
 
 def setup_middlewares(dp: Dispatcher) -> None:
     dp.update.outer_middleware(StructLoggingMiddleware(logger=dp["aiogram_logger"]))
     dp.update.middleware(DBSessionMiddleware(session_pool=async_session))
+    dp.update.middleware(UserObjectMiddleware())
 
 
 def setup_logging(dp: Dispatcher) -> None:

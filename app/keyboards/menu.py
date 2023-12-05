@@ -6,9 +6,9 @@ class Menu(DefaultConstructor):
     @staticmethod
     def main() -> aiogram.types.ReplyKeyboardMarkup:
         schema = [2, 1]
-        btns = [
+        buttons = [
             "📚 Все книги",
             "🔎 Поиск книг",
             "➕ Добавить"
         ]
-        return Menu._create_kb(btns, schema)
+        return Menu._create_kb(buttons, schema)
