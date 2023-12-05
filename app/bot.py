@@ -15,7 +15,7 @@ from aiohttp import web
 from redis.asyncio import Redis
 
 from app import handlers, utils, web_handlers
-from app.data import config
+from app.data import config, genres
 from app.middlewares import StructLoggingMiddleware, DBSessionMiddleware
 
 from app.db import init_db, async_session
@@ -27,6 +27,8 @@ async def create_db_connections(dp: Dispatcher) -> None:
 
     logger.debug("DataBase Initialization")
     await init_db()
+
+    await genres.prepare_data()  # добавление заранее известных жанров
 
     if config.USE_CACHE:
         logger.debug("Connecting to Redis")

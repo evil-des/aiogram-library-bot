@@ -12,6 +12,7 @@ from app.db import AsyncSession
 from .register_user import register_user
 import asyncio
 
+from app.keyboards import Menu
 
 window = Window(
     Format("Приветствуем тебя, @{start_data[username]} ✌️\n\n"
@@ -19,9 +20,6 @@ window = Window(
            "больше не держать названия любимых книг в голове :)\n\n"
            "Теперь ты можешь добавлять их в базу данных нашей библиотеки, "
            "а затем осуществлять удобный поиск по ней!"),
-    Group(
-        Button(text=Const("Профиль"), id="profile")
-    ),
     state=states.user.UserMainMenu.menu,
 )
 
@@ -42,5 +40,8 @@ async def start(message: types.Message,
 
 async def wait_and_send(message: types.Message):
     await asyncio.sleep(5)
-    await message.answer("Ознакомься с интерфейсом нашего бота, "
-                         "затем можешь приступать к добавлению книг 😎")
+    await message.answer(
+        "Ознакомься с интерфейсом нашего бота, "
+        "затем можешь приступать к добавлению книг 😎",
+        reply_markup=Menu.main()
+    )

@@ -6,10 +6,10 @@ from aiogram_dialog import setup_dialogs
 
 def prepare_router() -> Router:
     user_router = Router(name=__name__)
-    # сначала все роутеры
+    # свои роутеры здесь
     user_router.include_router(start.router)
 
-    # затем все диалоги
+    # здесь диалоги
     user_router.include_router(start.dialog)
     setup_dialogs(user_router)
 

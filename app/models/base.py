@@ -30,12 +30,11 @@ class UserBase(SQLModel, BaseModel):
 
 class BookBase(SQLModel, BaseModel):
     name: str
-    author: str
     desc: str = Field(default="Описание книги не указано")
 
 
 class GenreBase(SQLModel, BaseModel):
-    name: str
+    name: str = Field(default=None, unique=True)
     desc: str = Field(default="Описание жанра отсутствует")
 
 
