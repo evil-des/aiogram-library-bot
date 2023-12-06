@@ -1,7 +1,6 @@
 import asyncio
 
 import aiojobs
-# import asyncpg as asyncpg
 import orjson
 import structlog
 from typing import List, Tuple
@@ -17,12 +16,11 @@ from redis.asyncio import Redis
 from app import handlers, utils, web_handlers
 from app.middlewares import (
     StructLoggingMiddleware,
-    DBSessionMiddleware,
-    UserObjectMiddleware,
+    # UserObjectMiddleware,
     DatabaseMiddleware
 )
 
-from app.database.engine import get_async_session_maker
+from app.database.engine import get_async_session_maker, AsyncSession
 from app import dialogs
 
 from aiocache import Cache
@@ -82,9 +80,12 @@ async def close_db_connections(dp: Dispatcher) -> None:
     if "temp_bot_local_session" in dp.workflow_data:
         temp_bot_local_session: AiohttpSession = dp["temp_bot_local_session"]
         await temp_bot_local_session.close()
-    if "cache_pool" in dp.workflow_data:
-        cache_pool: redis.asyncio.Redis = dp["cache_pool"]  # type: ignore[type-arg]
-        await cache_pool.close()
+    if "session" in dp.workflow_data:
+        session: AsyncSession = dp["session"]
+        await session.close()
+    if "cache" in dp.workflow_data:
+        cache: redis.asyncio.Redis = dp["cache"]  # type: ignore[type-arg]
+        await cache.close()
 
 
 def register_dialogs(dp: Dispatcher):
