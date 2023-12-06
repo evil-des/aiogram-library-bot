@@ -8,3 +8,7 @@ class BookAdding(StatesGroup):
     set_author = State()
     set_desc = State()
     confirm = State()
+
+
+class BookListing(StatesGroup):
+    all_books = State()

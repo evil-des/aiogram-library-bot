@@ -6,25 +6,14 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.input import (
     TextInput, MessageInput, ManagedTextInput
 )
+from app.windows.listing import GenresWindow
 from app.dialogs.common import CommonElements
 from aiogram_dialog import Dialog, Window, DialogManager
 from app.states.book import BookAdding
 from app.services.repo import Repo
 from app.models import Genre, Book
-from typing import List, Any
-import operator
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog.widgets.text import Jinja
-
-
-async def get_genres(dialog_manager: DialogManager, **kwargs):
-    repo: Repo = dialog_manager.middleware_data["repo"]
-    genres: List[Genre] = await repo.genre_dao.get_genres()
-
-    return {
-        "genres": genres,
-        "count": len(genres)
-    }
 
 
 def author_name_input_checker(text: str):
@@ -35,16 +24,6 @@ def author_name_input_checker(text: str):
 
 async def on_author_input_error(message: Message, *args) -> None:
     await message.answer("Ошибка: в имени автора разрешены только буквы и пробелы")
-
-
-async def on_genre_click(
-        callback: CallbackQuery,
-        widget: Any,
-        dialog_manager: DialogManager,
-        item_id: str
-) -> None:
-    dialog_manager.dialog_data.update(genre_id=int(item_id))
-    await dialog_manager.next()
 
 
 async def on_name_success(
@@ -143,22 +122,8 @@ dialog = Dialog(
         ),
         state=BookAdding.show_menu,
     ),
-    Window(
-        Format("Выберите жанр книги (всего {count}):"),
-        ScrollingGroup(
-            Select(
-                Format("{item.name}"),
-                id="genres_select",
-                item_id_getter=operator.attrgetter("id"),
-                items="genres",
-                on_click=on_genre_click
-            ),
-            id="genres_scrolling",
-            height=5,
-            width=1
-        ),
-        state=BookAdding.set_genre,
-        getter=get_genres
+    GenresWindow(
+        state=BookAdding.set_genre
     ),
     CommonElements.input(
         id="book_name",
