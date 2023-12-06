@@ -2,32 +2,38 @@ from secrets import token_hex
 from typing import Optional, Dict, Any, List
 
 from pydantic_settings import BaseSettings
-from pydantic import Field, PostgresDsn, validator, RedisDsn
+from pydantic import Field, PostgresDsn, field_validator, RedisDsn, ValidationInfo
 
 
 class DefaultSettings(BaseSettings):
     VERSION: str = "1.0.0"
 
     DEBUG: bool = Field(default=False)
-    LOGGING_LEVEL: int = Field(default=10)
+    LOGGING_LEVEL: int = Field(default=20)  # read here - https://docs.python.org/3/library/logging.html#levels
+
+    @field_validator("LOGGING_LEVEL", mode="before")
+    def set_logging_leve(cls, v: Optional[int], info: ValidationInfo):
+        if info.data.get("DEBUG"):
+            return 10
+
+        if isinstance(v, int):
+            return v
 
     USE_WEBHOOK: bool = Field(default=False)
 
-    if USE_WEBHOOK:
-        MAIN_WEBHOOK_ADDRESS: Optional[str] = Field(default=None)
-        MAIN_WEBHOOK_SECRET_TOKEN: Optional[str] = Field(default=None)
+    MAIN_WEBHOOK_ADDRESS: Optional[str] = Field(default=None)
+    MAIN_WEBHOOK_SECRET_TOKEN: Optional[str] = Field(default=None)
 
-        MAIN_WEBHOOK_LISTENING_HOST: Optional[str] = Field(default=None)
-        MAIN_WEBHOOK_LISTENING_PORT: Optional[int] = Field(default=None)
+    MAIN_WEBHOOK_LISTENING_HOST: Optional[str] = Field(default=None)
+    MAIN_WEBHOOK_LISTENING_PORT: Optional[int] = Field(default=None)
 
-        MAX_UPDATES_IN_QUEUE: Optional[int] = Field(default=None)
+    MAX_UPDATES_IN_QUEUE: Optional[int] = Field(default=None)
 
     USE_CUSTOM_API_SERVER: bool = Field(default=False)
 
-    if USE_CUSTOM_API_SERVER:
-        CUSTOM_API_SERVER_IS_LOCAL: Optional[bool] = Field(default=False)
-        CUSTOM_API_SERVER_BASE: Optional[str] = Field(default=None)
-        CUSTOM_API_SERVER_FILE: Optional[str] = Field(default=None)
+    CUSTOM_API_SERVER_IS_LOCAL: Optional[bool] = Field(default=False)
+    CUSTOM_API_SERVER_BASE: Optional[str] = Field(default=None)
+    CUSTOM_API_SERVER_FILE: Optional[str] = Field(default=None)
 
     POSTGRES_USER: str = Field(default="user")
     POSTGRES_PASSWORD: str = Field(default="postgres_password")
@@ -37,17 +43,17 @@ class DefaultSettings(BaseSettings):
 
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
-    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
-    def assemble_db(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    @field_validator("SQLALCHEMY_DATABASE_URI", mode="after")
+    def assemble_db(cls, v: Optional[str], info: ValidationInfo) -> Any:
         if isinstance(v, str):
             return v
         return PostgresDsn.build(
             scheme="postgresql+asyncpg",
-            username=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_HOST"),
-            path=f'{values.get("POSTGRES_DB") or ""}',
-            port=values.get("POSTGRES_PORT") or None,
+            username=info.data.get("POSTGRES_USER"),
+            password=info.data.get("POSTGRES_PASSWORD"),
+            host=info.data.get("POSTGRES_HOST"),
+            path=f'{info.data.get("POSTGRES_DB") or ""}',
+            port=info.data.get("POSTGRES_PORT") or None,
         )
 
     BOT_TOKEN: str = Field(default="need_token")
@@ -61,14 +67,14 @@ class DefaultSettings(BaseSettings):
 
     REDIS_URI: Optional[RedisDsn] = None
 
-    @validator("REDIS_URI", pre=True)
-    def assemble_redis_uri(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    @field_validator("REDIS_URI", mode="after")
+    def assemble_redis_uri(cls, v: Optional[str], info: ValidationInfo) -> Any:
         if isinstance(v, str):
             return v
         return RedisDsn.build(
             scheme="redis",
-            host=values.get("REDIS_HOST"),
-            port=values.get("REDIS_PORT"),
-            password=values.get("REDIS_PASSWORD"),
+            host=info.data.get("REDIS_HOST"),
+            port=info.data.get("REDIS_PORT"),
+            password=info.data.get("REDIS_PASSWORD"),
             path="/1",
         )

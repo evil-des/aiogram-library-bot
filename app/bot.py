@@ -239,17 +239,19 @@ def main() -> None:
         )
     bot = Bot(settings.BOT_TOKEN, parse_mode="HTML", session=session)
 
-    storage = RedisStorage(
-        redis=Redis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            password=settings.REDIS_PASSWORD,
-            db=settings.REDIS_STORAGE_DB,
-        ),
-        key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
-    )
-
-    # await redis.flushdb()
+    if settings.DEBUG:
+        storage = MemoryStorage()
+    else:
+        storage = RedisStorage(
+            redis=Redis(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                password=settings.REDIS_PASSWORD,
+                db=settings.REDIS_STORAGE_DB,
+            ),
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
+        )
+        # await redis.flushdb()
 
     dp = Dispatcher(storage=storage)
     dp["aiogram_session_logger"] = aiogram_session_logger
