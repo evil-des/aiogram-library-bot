@@ -19,7 +19,7 @@ class BaseListingWindow(Window):
     ) -> None:
         objects = self.get_objects_keyboard(
             id=id,
-            on_click=self.on_item_selected,
+            on_click=self.on_click(id),
             button_text=button_text
         )
         super().__init__(
@@ -66,12 +66,15 @@ class BaseListingWindow(Window):
         """
         raise NotImplementedError
 
-    @staticmethod
-    async def on_item_selected(
-            callback: CallbackQuery,
-            widget: Any,
-            dialog_manager: DialogManager,
-            item_id: str
-    ) -> None:
-        dialog_manager.current_context().dialog_data.update(genre_id=int(item_id))
-        await dialog_manager.next()
+    def on_click(self, id: str):
+        async def on_item_selected(
+                callback: CallbackQuery,
+                widget: Any,
+                dialog_manager: DialogManager,
+                item_id: str
+        ) -> None:
+            options = {f"{id}_obj_id": int(item_id)}
+            dialog_manager.current_context().dialog_data.update(**options)
+            await dialog_manager.next()
+
+        return on_item_selected

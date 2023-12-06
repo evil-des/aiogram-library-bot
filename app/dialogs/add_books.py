@@ -60,7 +60,7 @@ async def get_book_data(dialog_manager: DialogManager, **kwargs):
     data = dialog_manager.dialog_data
     repo: Repo = dialog_manager.middleware_data["repo"]
     genre: Genre = await repo.genre_dao.get_genre(
-        data.get("genre_id")
+        data.get("genres_obj_id")
     )
     name = data.get("name").capitalize()
     author = " ".join([word.capitalize() for word in data.get("author").split()])
@@ -95,7 +95,7 @@ async def add_book(
     book = Book(
         name=data.get("name"),
         desc=data.get("desc"),
-        genre_id=data.get("genre_id"),
+        genre_id=data.get("genres_obj_id"),
         author_id=author.id,
     )
 
