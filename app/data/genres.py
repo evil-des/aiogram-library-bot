@@ -1,4 +1,4 @@
-from app.db import async_session
+from app.services.repo import Repo
 from app.models import Genre
 from sqlalchemy.exc import PendingRollbackError, IntegrityError
 

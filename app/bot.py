@@ -3,72 +3,76 @@ import asyncio
 import aiojobs
 # import asyncpg as asyncpg
 import orjson
-import redis
 import structlog
-import tenacity
+from typing import List, Tuple
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram_dialog import setup_dialogs
-from aiogram_dialog.setup import DialogRegistry
 from aiohttp import web
 from redis.asyncio import Redis
 
 from app import handlers, utils, web_handlers
-from app.data import config, genres
 from app.middlewares import (
     StructLoggingMiddleware,
     DBSessionMiddleware,
-    UserObjectMiddleware
+    UserObjectMiddleware,
+    DatabaseMiddleware
 )
 
-from app.db import init_db, async_session
+from app.database.engine import get_async_session_maker
 from app import dialogs
+
+from aiocache import Cache
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from app.utils.get_settings import get_settings
 
 # DO NOT DELETE THIS LINE - it's needed for creating tables in DB
 from app.models import User, Book, Genre, Author
 
 
-async def create_db_connections(dp: Dispatcher) -> None:
+settings = get_settings()
+
+
+async def create_db_connections(dp: Dispatcher) -> Tuple[async_sessionmaker, Cache]:
     logger: structlog.typing.FilteringBoundLogger = dp["business_logger"]
 
     logger.debug("DataBase Initialization")
-    await init_db()
+    async_session_maker = get_async_session_maker(
+        db_url=settings.SQLALCHEMY_DATABASE_URI
+    )
 
-    await genres.prepare_data()  # добавление заранее известных жанров
+    # await genres.prepare_data()  # добавление заранее известных жанров
 
-    if config.USE_CACHE:
-        logger.debug("Connecting to Redis")
-        try:
-            redis_pool = await utils.connect_to_services.wait_redis_pool(
-                logger=dp["cache_logger"],
-                host=config.CACHE_HOST,
-                password=config.CACHE_PASSWORD,
-                port=config.CACHE_PORT,
-                database=0,
-            )
-        except tenacity.RetryError:
-            logger.error("Failed to connect to Redis")
-            exit(1)
-        else:
-            logger.debug("Succesfully connected to Redis")
-        dp["cache_pool"] = redis_pool
+    if settings.DEBUG:
+        cache = Cache(cache_class=Cache.MEMORY)
+    else:
+        cache = Cache(
+            cache_class=Cache.REDIS,
+            endpoint=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD,
+            db=settings.REDIS_CACHE_DB,
+        )
 
     dp["temp_bot_cloud_session"] = utils.smart_session.SmartAiogramAiohttpSession(
         json_loads=orjson.loads,
         logger=dp["aiogram_session_logger"],
     )
-    if config.USE_CUSTOM_API_SERVER:
+    if settings.USE_CUSTOM_API_SERVER:
         dp["temp_bot_local_session"] = utils.smart_session.SmartAiogramAiohttpSession(
             api=TelegramAPIServer(
-                base=config.CUSTOM_API_SERVER_BASE,
-                file=config.CUSTOM_API_SERVER_FILE,
-                is_local=config.CUSTOM_API_SERVER_IS_LOCAL,
+                base=settings.CUSTOM_API_SERVER_BASE,
+                file=settings.CUSTOM_API_SERVER_FILE,
+                is_local=settings.CUSTOM_API_SERVER_IS_LOCAL,
             ),
             json_loads=orjson.loads,
             logger=dp["aiogram_session_logger"],
         )
+
+    return async_session_maker, cache
 
 
 async def close_db_connections(dp: Dispatcher) -> None:
@@ -101,10 +105,16 @@ def setup_handlers(dp: Dispatcher) -> None:
     register_dialogs(dp)
 
 
-def setup_middlewares(dp: Dispatcher) -> None:
+def setup_middlewares(dp: Dispatcher, async_session_maker, cache) -> None:
     dp.update.outer_middleware(StructLoggingMiddleware(logger=dp["aiogram_logger"]))
-    dp.update.middleware(DBSessionMiddleware(session_pool=async_session))
-    dp.update.middleware(UserObjectMiddleware())
+    # dp.update.middleware(DBSessionMiddleware(session_pool=async_session))
+    dp.update.middleware(
+        DatabaseMiddleware(
+            async_session_maker=async_session_maker,
+            cache=cache
+        )
+    )
+    # dp.update.middleware(UserObjectMiddleware())
 
 
 def setup_logging(dp: Dispatcher) -> None:
@@ -118,9 +128,11 @@ async def setup_aiogram(dp: Dispatcher) -> None:
     setup_logging(dp)
     logger = dp["aiogram_logger"]
     logger.debug("Configuring aiogram")
-    await create_db_connections(dp)
+
+    sessionmaker, cache = await create_db_connections(dp)
     setup_handlers(dp)
-    setup_middlewares(dp)
+    setup_middlewares(dp, async_session_maker=sessionmaker, cache=cache)
+
     logger.info("Configured aiogram")
 
 
@@ -152,15 +164,15 @@ async def aiohttp_on_shutdown(app: web.Application) -> None:
 async def aiogram_on_startup_webhook(dispatcher: Dispatcher, bot: Bot) -> None:
     await setup_aiogram(dispatcher)
     webhook_logger = dispatcher["aiogram_logger"].bind(
-        webhook_url=config.MAIN_WEBHOOK_ADDRESS
+        webhook_url=settings.MAIN_WEBHOOK_ADDRESS
     )
     webhook_logger.debug("Configuring webhook")
     await bot.set_webhook(
-        url=config.MAIN_WEBHOOK_ADDRESS.format(
-            token=config.BOT_TOKEN, bot_id=config.BOT_TOKEN.split(":")[0]
+        url=settings.MAIN_WEBHOOK_ADDRESS.format(
+            token=settings.BOT_TOKEN, bot_id=settings.BOT_TOKEN.split(":")[0]
         ),
         allowed_updates=dispatcher.resolve_used_update_types(),
-        secret_token=config.MAIN_WEBHOOK_SECRET_TOKEN,
+        secret_token=settings.MAIN_WEBHOOK_SECRET_TOKEN,
     )
     webhook_logger.info("Configured webhook")
 
@@ -209,12 +221,12 @@ async def setup_aiohttp_app(bot: Bot, dp: Dispatcher) -> web.Application:
 def main() -> None:
     aiogram_session_logger = utils.logging.setup_logger().bind(type="aiogram_session")
 
-    if config.USE_CUSTOM_API_SERVER:
+    if settings.USE_CUSTOM_API_SERVER:
         session = utils.smart_session.SmartAiogramAiohttpSession(
             api=TelegramAPIServer(
-                base=config.CUSTOM_API_SERVER_BASE,
-                file=config.CUSTOM_API_SERVER_FILE,
-                is_local=config.CUSTOM_API_SERVER_IS_LOCAL,
+                base=settings.CUSTOM_API_SERVER_BASE,
+                file=settings.CUSTOM_API_SERVER_FILE,
+                is_local=settings.CUSTOM_API_SERVER_IS_LOCAL,
             ),
             json_loads=orjson.loads,
             logger=aiogram_session_logger,
@@ -224,29 +236,31 @@ def main() -> None:
             json_loads=orjson.loads,
             logger=aiogram_session_logger,
         )
-    bot = Bot(config.BOT_TOKEN, parse_mode="HTML", session=session)
+    bot = Bot(settings.BOT_TOKEN, parse_mode="HTML", session=session)
 
-    dp = Dispatcher(
-        storage=RedisStorage(
-            redis=Redis(
-                host=config.FSM_HOST,
-                password=config.FSM_PASSWORD,
-                port=config.FSM_PORT,
-                db=0,
-            ),
-            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
-        )
+    storage = RedisStorage(
+        redis=Redis(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD,
+            db=settings.REDIS_STORAGE_DB,
+        ),
+        key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
     )
+
+    # await redis.flushdb()
+
+    dp = Dispatcher(storage=storage)
     dp["aiogram_session_logger"] = aiogram_session_logger
 
-    if config.USE_WEBHOOK:
+    if settings.USE_WEBHOOK:
         dp.startup.register(aiogram_on_startup_webhook)
         dp.shutdown.register(aiogram_on_shutdown_webhook)
         web.run_app(
             asyncio.run(setup_aiohttp_app(bot, dp)),
             handle_signals=True,
-            host=config.MAIN_WEBHOOK_LISTENING_HOST,
-            port=config.MAIN_WEBHOOK_LISTENING_PORT,
+            host=settings.MAIN_WEBHOOK_LISTENING_HOST,
+            port=settings.MAIN_WEBHOOK_LISTENING_PORT,
         )
     else:
         dp.startup.register(aiogram_on_startup_polling)

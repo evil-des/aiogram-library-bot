@@ -45,7 +45,7 @@ ignore-init-module-imports = true
 
 
 [tool.poetry]
-name = "aiogram-library-bot"
+name = "app"
 version = "1.0.0"
 description = "Library database in Telegram"
 authors = ["evil-des"]
@@ -66,6 +66,8 @@ pytz = "^2023.3.post1"
 sqlalchemy = "^2.0.23"
 sqlmodel = "^0.0.14"
 aiogram-dialog = "^2.0.0"
+aiocache = "^0.12.2"
+pydantic-settings = "^2.1.0"
 
 [tool.poetry.group.dev]
 optional = true

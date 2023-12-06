@@ -6,7 +6,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog import Dialog, Window, DialogManager
 from app.states.book import BookAdding
-from app.db import async_session
+from app.services.repo import Repo
 from app.models import Genre
 from sqlalchemy.future import select
 from typing import List, Any
@@ -14,12 +14,10 @@ import operator
 from aiogram.types import CallbackQuery, Message
 
 
-async def get_genres(**kwargs):
-    async with async_session() as session:
-        result = await session.execute(select(Genre))
-        genres = result.scalars().all()
-        for genre in genres:
-            print(genre.name)
+async def get_genres(dialog_manager: DialogManager, **kwargs):
+    repo: Repo = dialog_manager.middleware_data["repo"]
+    genres = await repo.genre_dao.get_genres()
+
     return {
         "genres": genres,
         "count": len(genres)

@@ -1,3 +1,4 @@
-from .logging import StructLoggingMiddleware as StructLoggingMiddleware
-from .db import DBSessionMiddleware as DBSessionMiddleware
-from .user_object import UserObjectMiddleware as UserObjectMiddleware
+from .logging import StructLoggingMiddleware
+from .db import DBSessionMiddleware
+from .user_object import UserObjectMiddleware
+from .database import DatabaseMiddleware

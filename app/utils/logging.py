@@ -4,12 +4,13 @@ import sys
 import structlog
 
 from app import models
-from app.data import config
+from app.utils.get_settings import get_settings
 
 
 def setup_logger() -> structlog.typing.FilteringBoundLogger:
+    settings = get_settings()
     logging.basicConfig(
-        level=config.LOGGING_LEVEL,
+        level=settings.LOGGING_LEVEL,
         stream=sys.stdout,
     )
     log: structlog.typing.FilteringBoundLogger = structlog.get_logger(
@@ -35,6 +36,6 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         ]
     structlog.configure(
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(config.LOGGING_LEVEL),
+        wrapper_class=structlog.make_filtering_bound_logger(settings.LOGGING_LEVEL),
     )
     return log

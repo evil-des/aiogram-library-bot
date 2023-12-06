@@ -1,48 +1,74 @@
-import subprocess
+from secrets import token_hex
+from typing import Optional, Dict, Any, List
 
-from environs import Env
+from pydantic_settings import BaseSettings
+from pydantic import Field, PostgresDsn, validator, RedisDsn
 
-VERSION = subprocess.check_output(["git", "describe", "--always"]).strip().decode()
 
-env = Env()
-env.read_env()
+class DefaultSettings(BaseSettings):
+    VERSION: str = "1.0.0"
 
-BOT_TOKEN: str = env.str("BOT_TOKEN")
+    DEBUG: bool = Field(default=False)
+    LOGGING_LEVEL: int = Field(default=10)
 
-LOGGING_LEVEL: int = env.int("LOGGING_LEVEL", 10)
-DATABASE_URL: str = env.str("DATABASE_URL")
+    USE_WEBHOOK: bool = Field(default=False)
 
-# PG_HOST: str = env.str("PG_HOST")
-# PG_PORT: int = env.int("PG_PORT")
-# PG_USER: str = env.str("PG_USER")
-# PG_PASSWORD: str = env.str("PG_PASSWORD")
-# PG_DATABASE: str = env.str("PG_DATABASE")
+    if USE_WEBHOOK:
+        MAIN_WEBHOOK_ADDRESS: Optional[str] = Field(default=None)
+        MAIN_WEBHOOK_SECRET_TOKEN: Optional[str] = Field(default=None)
 
-FSM_HOST: str = env.str("FSM_HOST")
-FSM_PORT: int = env.int("FSM_PORT")
-FSM_PASSWORD: str = env.str("FSM_PASSWORD")
+        MAIN_WEBHOOK_LISTENING_HOST: Optional[str] = Field(default=None)
+        MAIN_WEBHOOK_LISTENING_PORT: Optional[int] = Field(default=None)
 
-USE_CACHE: bool = env.bool("USE_CACHE", False)
+        MAX_UPDATES_IN_QUEUE: Optional[int] = Field(default=None)
 
-if USE_CACHE:
-    CACHE_HOST: str = env.str("CACHE_HOST")
-    CACHE_PORT: int = env.int("CACHE_PORT")
-    CACHE_PASSWORD: str = env.str("CACHE_PASSWORD")
+    USE_CUSTOM_API_SERVER: bool = Field(default=False)
 
-USE_WEBHOOK: bool = env.bool("USE_WEBHOOK", False)
+    if USE_CUSTOM_API_SERVER:
+        CUSTOM_API_SERVER_IS_LOCAL: Optional[bool] = Field(default=False)
+        CUSTOM_API_SERVER_BASE: Optional[str] = Field(default=None)
+        CUSTOM_API_SERVER_FILE: Optional[str] = Field(default=None)
 
-if USE_WEBHOOK:
-    MAIN_WEBHOOK_ADDRESS: str = env.str("MAIN_WEBHOOK_ADDRESS")
-    MAIN_WEBHOOK_SECRET_TOKEN: str = env.str("MAIN_WEBHOOK_SECRET_TOKEN")
+    POSTGRES_USER: str = Field(default="user")
+    POSTGRES_PASSWORD: str = Field(default="postgres_password")
+    POSTGRES_DB: str = Field(default="database")
+    POSTGRES_HOST: str = Field(default="127.0.0.1")
+    POSTGRES_PORT: int = Field(default="5432")
 
-    MAIN_WEBHOOK_LISTENING_HOST: str = env.str("MAIN_WEBHOOK_LISTENING_HOST")
-    MAIN_WEBHOOK_LISTENING_PORT: int = env.int("MAIN_WEBHOOK_LISTENING_PORT")
+    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
-    MAX_UPDATES_IN_QUEUE: int = env.int("MAX_UPDATES_IN_QUEUE", 100)
+    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
+    def assemble_db(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+        if isinstance(v, str):
+            return v
+        return PostgresDsn.build(
+            scheme="postgresql+asyncpg",
+            username=values.get("POSTGRES_USER"),
+            password=values.get("POSTGRES_PASSWORD"),
+            host=values.get("POSTGRES_HOST"),
+            path=f'{values.get("POSTGRES_DB") or ""}',
+            port=values.get("POSTGRES_PORT") or None,
+        )
 
-USE_CUSTOM_API_SERVER: bool = env.bool("USE_CUSTOM_API_SERVER", False)
+    BOT_TOKEN: str = Field(default="need_token")
 
-if USE_CUSTOM_API_SERVER:
-    CUSTOM_API_SERVER_IS_LOCAL: bool = env.bool("CUSTOM_API_SERVER_IS_LOCAL")
-    CUSTOM_API_SERVER_BASE: str = env.str("CUSTOM_API_SERVER_BASE")
-    CUSTOM_API_SERVER_FILE: str = env.str("CUSTOM_API_SERVER_FILE")
+    REDIS_HOST: str = Field(default="127.0.0.1")
+    REDIS_PORT: int = Field(default=6379)
+    REDIS_PASSWORD: str = Field(default="redis_password")
+
+    REDIS_CACHE_DB: int = Field(default=5)
+    REDIS_STORAGE_DB: int = Field(default=3)
+
+    REDIS_URI: Optional[RedisDsn] = None
+
+    @validator("REDIS_URI", pre=True)
+    def assemble_redis_uri(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+        if isinstance(v, str):
+            return v
+        return RedisDsn.build(
+            scheme="redis",
+            host=values.get("REDIS_HOST"),
+            port=values.get("REDIS_PORT"),
+            password=values.get("REDIS_PASSWORD"),
+            path="/1",
+        )

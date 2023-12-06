@@ -1,5 +1,5 @@
 from aiogram import types
-from app.db import AsyncSession
+from app.services.repo import AsyncSession
 from app.models import User
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 from sqlalchemy.future import select
