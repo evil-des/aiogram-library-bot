@@ -75,3 +75,20 @@ class UserDAO(DAO):
             await self.session.refresh(user)
 
         return user
+
+    async def add_book(
+        self,
+        chat_id: int,
+        book: Book
+    ) -> User:
+        user: User = await self.get_user(chat_id)
+
+        async with self.session:
+            book.user = user
+            self.session.add(book)
+
+            await self.session.commit()
+            await self.session.refresh(book)
+            await self.session.refresh(user)
+
+        return user
