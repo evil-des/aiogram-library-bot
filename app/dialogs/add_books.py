@@ -6,7 +6,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.input import (
     TextInput, MessageInput, ManagedTextInput
 )
-from app.windows import BookConfirmWindow
+from app.windows import BookAddWindow
 from app.windows.listing import GenresWindow
 from app.dialogs.common import CommonElements
 from aiogram_dialog import Dialog, Window, DialogManager
@@ -27,10 +27,10 @@ async def on_author_input_error(message: Message, *args) -> None:
 
 
 async def on_name_success(
-        message: Message,
-        widget: ManagedTextInput,
-        dialog_manager: DialogManager,
-        *args
+    message: Message,
+    widget: ManagedTextInput,
+    dialog_manager: DialogManager,
+    *args
 ) -> None:
     repo: Repo = dialog_manager.middleware_data["repo"]
     data = dialog_manager.dialog_data
@@ -43,10 +43,10 @@ async def on_name_success(
 
 
 async def on_author_name_success(
-        message: Message,
-        widget: ManagedTextInput,
-        dialog_manager: DialogManager,
-        *args
+    message: Message,
+    widget: ManagedTextInput,
+    dialog_manager: DialogManager,
+    *args
 ) -> None:
     book_add: BookAdd = dialog_manager.dialog_data.get("book_add")
     book_add.author = widget.get_value()
@@ -54,10 +54,10 @@ async def on_author_name_success(
 
 
 async def on_desc_success(
-        message: Message,
-        widget: ManagedTextInput,
-        dialog_manager: DialogManager,
-        *args
+    message: Message,
+    widget: ManagedTextInput,
+    dialog_manager: DialogManager,
+    *args
 ) -> None:
     book_add: BookAdd = dialog_manager.dialog_data.get("book_add")
     book_add.desc = widget.get_value()
@@ -102,7 +102,7 @@ dialog = Dialog(
         on_success=on_desc_success,
         skip=True
     ),
-    BookConfirmWindow(
+    BookAddWindow(
         state=BookAdding.confirm
     )
 )

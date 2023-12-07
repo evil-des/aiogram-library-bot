@@ -23,3 +23,12 @@ class BookDAO(DAO):
         if ids is not None:
             q.filter(Book.id.in_(ids))
         return (await self.session.execute(q)).scalars().all()
+
+    async def delete_book(self, id: int) -> None:
+        q = delete(Book).where(
+            Book.id == id
+        )
+
+        await self.session.execute(q)
+        await self.session.commit()
+        # await self.session.refresh(Book)

@@ -32,6 +32,14 @@ class CommonElements:
         return Back(Const("🔙 Назад"))
 
     @staticmethod
+    def confirm_btn(on_click) -> Button:
+        return Button(
+            Const("✅ Подтвердить"),
+            id="confirm",
+            on_click=on_click
+        )
+
+    @staticmethod
     def add_btn(on_click) -> Button:
         return Button(
             Const("✅ Добавить"),
@@ -53,6 +61,13 @@ class CommonElements:
             Const("❌ Отмена"),
             id="cancel",
             on_click=CommonElements.on_cancel_click
+        )
+
+    @staticmethod
+    def confirm_n_cancel(on_click) -> Row:
+        return Row(
+            CommonElements.confirm_btn(on_click),
+            CommonElements.cancel_btn()
         )
 
     @staticmethod

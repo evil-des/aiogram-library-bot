@@ -13,3 +13,4 @@ class BookAdding(StatesGroup):
 class BookListing(StatesGroup):
     all_books = State()
     book_info = State()
+    delete_book = State()

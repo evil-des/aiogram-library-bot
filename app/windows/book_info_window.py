@@ -1,10 +1,11 @@
 from aiogram.fsm.state import State
 from aiogram_dialog import Window, DialogManager
-from aiogram_dialog.widgets.kbd import Back, Group, Button
+from aiogram_dialog.widgets.kbd import Back, Group, Button, SwitchTo
 from aiogram_dialog.widgets.text import Jinja, Const
 from app.dialogs.common import CommonElements
 
 from app.models import Book, Genre
+from app.states.book import BookListing
 from typing import Dict
 
 from app.services.repo import Repo
@@ -13,9 +14,8 @@ from app.database.engine import AsyncSession
 
 class BookInfoWindow(Window):
     def __init__(
-            self,
-            # buttons,
-            state: State
+        self,
+        state: State
     ) -> None:
         super().__init__(
             self.get_detailed_book_info(),
@@ -28,7 +28,11 @@ class BookInfoWindow(Window):
     def get_book_info_keyboard():
         return Group(
             CommonElements.back_btn(),
-            CommonElements.delete_btn(on_click=None),
+            SwitchTo(
+                Const("❌ Удалить"),
+                id="delete_book",
+                state=BookListing.delete_book
+            ),
             width=2
         )
 

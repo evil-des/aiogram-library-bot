@@ -12,7 +12,7 @@ from typing import Dict
 from app.services.repo import Repo
 
 
-class BookConfirmWindow(Window):
+class BookAddWindow(Window):
     def __init__(
             self,
             state: State

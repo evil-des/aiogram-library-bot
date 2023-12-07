@@ -12,7 +12,7 @@ from app.states.book import BookListing
 from app.services.repo import Repo
 from app.models import Genre, Book
 from app.windows.listing import BooksWindow
-from app.windows import BookInfoWindow
+from app.windows import BookInfoWindow, BookDeleteWindow
 from typing import List, Any
 import operator
 from aiogram.types import CallbackQuery, Message
@@ -25,5 +25,8 @@ dialog = Dialog(
     ),
     BookInfoWindow(
         state=BookListing.book_info
+    ),
+    BookDeleteWindow(
+        state=BookListing.delete_book
     )
 )
