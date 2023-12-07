@@ -61,7 +61,8 @@ class BaseListingWindow(Window):
             genres,
             id=id,
             height=height,
-            width=width
+            width=width,
+            hide_on_single_page=True
         )
 
         return sg
