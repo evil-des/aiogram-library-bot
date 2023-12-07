@@ -1,9 +1,10 @@
 from aiogram.fsm.state import State
 from aiogram_dialog import Window, DialogManager
-from aiogram_dialog.widgets.kbd import Back
+from aiogram_dialog.widgets.kbd import Back, Group, Button
+from aiogram_dialog.widgets.text import Jinja, Const
+from app.dialogs.common import CommonElements
 
 from app.models import Book, Genre
-from aiogram_dialog.widgets.text import Jinja, Const
 from typing import Dict
 
 from app.services.repo import Repo
@@ -25,7 +26,11 @@ class BookInfoWindow(Window):
 
     @staticmethod
     def get_book_info_keyboard():
-        return Back(Const("Назад"))
+        return Group(
+            CommonElements.delete_btn(on_click=None),
+            CommonElements.back_btn(),
+            width=2
+        )
 
     def get_book_data(self):
         async def book_getter(

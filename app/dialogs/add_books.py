@@ -74,7 +74,7 @@ dialog = Dialog(
                 id="show_genres",
                 state=BookAdding.set_genre
             ),
-            Cancel(Const("Отмена"), on_click=CommonElements.on_cancel_click),
+            CommonElements.cancel_btn(),
         ),
         state=BookAdding.show_menu,
     ),

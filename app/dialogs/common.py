@@ -1,4 +1,6 @@
-from aiogram_dialog.widgets.kbd import Row, Button, Cancel, Back, Group, Next
+from aiogram_dialog.widgets.kbd import (
+    Row, Button, Cancel, Back, Group, Next
+)
 from aiogram_dialog.widgets.text import Const, Text
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from aiogram.types import CallbackQuery, Message
@@ -14,6 +16,7 @@ class CommonElements:
             dialog_manager: DialogManager,
     ) -> None:
         await dialog_manager.reset_stack()
+        await c.message.answer("Действие отменено!")
         await c.message.delete()
 
     @staticmethod
@@ -25,14 +28,30 @@ class CommonElements:
         await message.answer("Вы ошиблись при вводе! Попробуйте еще раз")
 
     @staticmethod
-    def back_n_cancel():
+    def back_btn() -> Back:
+        return Back(Const("🔙 Назад"))
+
+    @staticmethod
+    def cancel_btn() -> Cancel:
+        return Cancel(
+            Const("❌ Отмена"),
+            id="cancel",
+            on_click=CommonElements.on_cancel_click
+        )
+
+    @staticmethod
+    def back_n_cancel() -> Row:
         return Row(
-            Back(Const("🔙 Назад")),
-            Button(
-                Const("❌ Отмена"),
-                id="cancel",
-                on_click=CommonElements.on_cancel_click
-            )
+            CommonElements.back_btn(),
+            CommonElements.cancel_btn()
+        )
+
+    @staticmethod
+    def delete_btn(on_click) -> Button:
+        return Button(
+            Const("❌ Удалить"),
+            id="delete",
+            on_click=on_click
         )
 
     @staticmethod

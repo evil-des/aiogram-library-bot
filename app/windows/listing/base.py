@@ -3,6 +3,7 @@ import abc
 from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Window, DialogManager
+from aiogram_dialog.widgets.common.base import Widget
 from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
 from aiogram_dialog.widgets.text import Format, Text, Const
 from typing import List, Any, Dict, Optional
@@ -12,28 +13,41 @@ class BaseListingWindow(Window):
     LISTING_MESSAGE: str = "Список объектов (всего {count} шт.):"
     BUTTON_TEXT: str = "{item.name}"
 
+    HEIGHT: int = 5
+    WIDTH: int = 1
+
     def __init__(
             self,
             id: str,
-            state: State
+            state: State,
+            elements: Optional[List[Widget]] = None
     ) -> None:
         objects = self.get_objects_keyboard(
             id=id,
             on_click=self.on_click(id),
-            button_text=self.BUTTON_TEXT
+            button_text=self.BUTTON_TEXT,
+            width=self.WIDTH,
+            height=self.HEIGHT
         )
-        super().__init__(
-            Format(self.LISTING_MESSAGE),
-            objects,
-            getter=self.get_data,
-            state=state
-        )
+        widgets = [Format(self.LISTING_MESSAGE), objects]
+        kwargs = {
+            "getter": self.get_data,
+            "state": state,
+        }
+
+        if elements is not None:
+            widgets.append(*elements)
+            super().__init__(*widgets, **kwargs)
+
+        super().__init__(*widgets, **kwargs)
 
     @staticmethod
     def get_objects_keyboard(
             id: str,
             on_click,
-            button_text: str
+            button_text: str,
+            width: int,
+            height: int
     ) -> ScrollingGroup:
         genres = Select(
             Format(button_text),
@@ -46,8 +60,8 @@ class BaseListingWindow(Window):
         sg = ScrollingGroup(
             genres,
             id=id,
-            height=5,
-            width=1
+            height=height,
+            width=width
         )
 
         return sg
