@@ -62,7 +62,7 @@ class BookAddWindow(Window):
             widget: Button,
             dialog_manager: DialogManager,
     ) -> None:
-        await callback.answer("⏳ Ожидайте... Книга добавляется в базу данных")
+        # await callback.answer("⏳ Ожидайте... Книга добавляется в базу данных")
         repo: Repo = dialog_manager.middleware_data["repo"]
         book_add: BookAdd = dialog_manager.dialog_data.get("book_add")
 

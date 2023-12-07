@@ -35,7 +35,7 @@ class BookDeleteWindow(Window):
         widget: Button,
         dialog_manager: DialogManager,
     ) -> None:
-        await callback.answer("⏳ Ожидайте... Книга удаляется из базы данных")
+        # await callback.answer("⏳ Ожидайте... Книга удаляется из базы данных")
         repo: Repo = dialog_manager.middleware_data["repo"]
         book_id: int = dialog_manager.dialog_data.get("books_obj_id")
 
