@@ -8,6 +8,7 @@ from typing import List, Any
 
 class BooksWindow(BaseListingWindow):
     LISTING_MESSAGE = "Выберите книгу из списка (всего {count} шт.):"
+    BUTTON_TEXT = "{item.name} ({item.author.full_name})"
 
     def __init__(self, state: State):
         super().__init__(id="books", state=state)

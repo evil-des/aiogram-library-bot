@@ -10,17 +10,17 @@ from typing import List, Any, Dict, Optional
 
 class BaseListingWindow(Window):
     LISTING_MESSAGE: str = "Список объектов (всего {count} шт.):"
+    BUTTON_TEXT: str = "{item.name}"
 
     def __init__(
             self,
             id: str,
-            state: State,
-            button_text: Optional[Text] = None
+            state: State
     ) -> None:
         objects = self.get_objects_keyboard(
             id=id,
             on_click=self.on_click(id),
-            button_text=button_text
+            button_text=self.BUTTON_TEXT
         )
         super().__init__(
             Format(self.LISTING_MESSAGE),
@@ -33,13 +33,10 @@ class BaseListingWindow(Window):
     def get_objects_keyboard(
             id: str,
             on_click,
-            button_text: Optional[Text] = None,
+            button_text: str
     ) -> ScrollingGroup:
-        if button_text is None:
-            button_text: Text = Format("{item.name}")
-
         genres = Select(
-            button_text,
+            Format(button_text),
             id=f"s_{id}",
             item_id_getter=lambda item: item.id,
             items="items",
