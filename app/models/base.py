@@ -29,7 +29,7 @@ class UserBase(SQLModel, BaseModel):
 
 
 class BookBase(SQLModel, BaseModel):
-    name: str
+    name: str = Field(default=None)
     desc: str = Field(default="Описание книги не указано")
 
 

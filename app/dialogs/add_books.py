@@ -6,14 +6,14 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.input import (
     TextInput, MessageInput, ManagedTextInput
 )
+from app.windows import BookConfirmWindow
 from app.windows.listing import GenresWindow
 from app.dialogs.common import CommonElements
 from aiogram_dialog import Dialog, Window, DialogManager
 from app.states.book import BookAdding
 from app.services.repo import Repo
-from app.models import Genre, Book
+from app.models import Genre, Book, BookAdd
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog.widgets.text import Jinja
 
 
 def author_name_input_checker(text: str):
@@ -32,7 +32,13 @@ async def on_name_success(
         dialog_manager: DialogManager,
         *args
 ) -> None:
-    dialog_manager.dialog_data.update(name=widget.get_value())
+    repo: Repo = dialog_manager.middleware_data["repo"]
+    data = dialog_manager.dialog_data
+
+    book_add = BookAdd(name=widget.get_value(), genre_id=data.get("genres_obj_id"))
+    book_add.genre = (await repo.genre_dao.get_genre(book_add.genre_id)).name
+    data.update(book_add=book_add)
+
     await dialog_manager.next()
 
 
@@ -42,7 +48,8 @@ async def on_author_name_success(
         dialog_manager: DialogManager,
         *args
 ) -> None:
-    dialog_manager.dialog_data.update(author=widget.get_value())
+    book_add: BookAdd = dialog_manager.dialog_data.get("book_add")
+    book_add.author = widget.get_value()
     await dialog_manager.next()
 
 
@@ -52,60 +59,9 @@ async def on_desc_success(
         dialog_manager: DialogManager,
         *args
 ) -> None:
-    dialog_manager.dialog_data.update(desc=widget.get_value())
+    book_add: BookAdd = dialog_manager.dialog_data.get("book_add")
+    book_add.desc = widget.get_value()
     await dialog_manager.next()
-
-
-async def get_book_data(dialog_manager: DialogManager, **kwargs):
-    data = dialog_manager.dialog_data
-    repo: Repo = dialog_manager.middleware_data["repo"]
-    genre: Genre = await repo.genre_dao.get_genre(
-        data.get("genres_obj_id")
-    )
-    name = data.get("name").capitalize()
-    author = " ".join([word.capitalize() for word in data.get("author").split()])
-
-    if "desc" in data:
-        desc = data.get("desc")
-    else:
-        desc = "Не указано"
-
-    data.update(name=name, author=author)
-    return {
-        "name": name,
-        "genre": genre,
-        "author": author,
-        "desc": desc,
-    }
-
-
-async def add_book(
-        callback: CallbackQuery,
-        widget: Button,
-        dialog_manager: DialogManager,
-) -> None:
-    await callback.answer("⏳ Ожидайте... Книга добавляется в базу данных")
-    repo: Repo = dialog_manager.middleware_data["repo"]
-    data = dialog_manager.dialog_data
-
-    author = await repo.author_dao.create_author_if_not_exist(
-        data.get("author")
-    )
-
-    book = Book(
-        name=data.get("name"),
-        desc=data.get("desc"),
-        genre_id=data.get("genres_obj_id"),
-        author_id=author.id,
-    )
-
-    await repo.user_dao.add_book(
-        callback.from_user.id,
-        book
-    )
-
-    await dialog_manager.done()
-    await callback.message.answer("Книга успешно добавлена 👍")
 
 
 dialog = Dialog(
@@ -146,21 +102,7 @@ dialog = Dialog(
         on_success=on_desc_success,
         skip=True
     ),
-    Window(
-        Jinja(
-            "➖➖➖➖➖➖➖➖➖➖\n"
-            "Название: <b>{{ name }}</b>\n"
-            "Жанр: <b>{{ genre.name }}</b>\n"
-            "Автор книги: <b>{{ author }}</b>\n\n"
-            "Описание:\n<i>{{ desc }}</i>\n"
-            "➖➖➖➖➖➖➖➖➖➖\n\n"
-            "📌 Проверьте правильность введенных данных и нажмите на нужную кнопку"
-        ),
-        Row(
-          Button(Const("Добавить"), id="add_book", on_click=add_book),
-          Button(Const("Отменить"), id="cancel", on_click=CommonElements.on_cancel_click),
-        ),
-        getter=get_book_data,
+    BookConfirmWindow(
         state=BookAdding.confirm
     )
 )
