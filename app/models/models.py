@@ -1,5 +1,5 @@
 from sqlmodel import (
-    Field, Relationship, BigInteger, Column
+    Field, Relationship, BigInteger, Column, SQLModel
 )
 from .base import (
     UserBase, AuthorBase, GenreBase, BookBase
@@ -42,3 +42,7 @@ class BookAdd(BookBase):
     genre_id: int = Field(default=None)
     genre: str = Field(default=None)
     author: str = Field(default=None)
+
+
+class BookFilter(SQLModel):
+    IS_GENRE_FILTER: bool = False

@@ -10,8 +10,8 @@ from app.dialogs.common import CommonElements
 from aiogram_dialog import Dialog, Window, DialogManager
 from app.states.book import BookListing
 from app.services.repo import Repo
-from app.models import Genre, Book
-from app.windows.listing import BooksWindow
+from app.models import BookFilter
+from app.windows.listing import BooksWindow, GenresWindow
 from app.windows import BookInfoWindow, BookDeleteWindow
 from typing import List, Any
 import operator
@@ -28,5 +28,13 @@ dialog = Dialog(
     ),
     BookDeleteWindow(
         state=BookListing.delete_book
+    ),
+    GenresWindow(
+        state=BookListing.filter_menu,
+        switch_to=BookListing.filtered_books
+    ),
+    BooksWindow(
+        state=BookListing.filtered_books,
+        filter=BookFilter(IS_GENRE_FILTER=True)
     )
 )

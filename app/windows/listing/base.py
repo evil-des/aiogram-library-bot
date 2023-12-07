@@ -20,18 +20,26 @@ class BaseListingWindow(Window):
             self,
             id: str,
             state: State,
-            elements: Optional[List[Widget]] = None
+            elements: Optional[List[Widget]] = None,
+            switch_to: Optional[State] = None,
+            data_getter_kwargs: Optional[dict] = None
     ) -> None:
         objects = self.get_objects_keyboard(
             id=id,
-            on_click=self.on_click(id),
+            on_click=self.on_click(id, state=switch_to),
             button_text=self.BUTTON_TEXT,
             width=self.WIDTH,
             height=self.HEIGHT
         )
         widgets = [Format(self.LISTING_MESSAGE), objects]
+
+        if data_getter_kwargs is not None:
+            data_getter = self.data_getter(**data_getter_kwargs)
+        else:
+            data_getter = self.data_getter()
+
         kwargs = {
-            "getter": self.get_data,
+            "getter": data_getter,
             "state": state,
         }
 
@@ -67,18 +75,20 @@ class BaseListingWindow(Window):
 
         return sg
 
-    @staticmethod
     @abc.abstractmethod
-    async def get_data(dialog_manager: DialogManager, **kwargs) -> Dict:
-        """
-        You must implement this method to get your own data
-        :param dialog_manager: DialogManager
-        :param kwargs:
-        :return: you must return dict with required key "items" (that we iterate)
-        """
-        raise NotImplementedError
+    def data_getter(self, **kwargs):
+        async def get_data(dialog_manager: DialogManager, **kwargs) -> Dict:
+            """
+            You must implement this method to get your own data
+            :param dialog_manager: DialogManager
+            :param kwargs:
+            :return: you must return dict with required key "items" (that we iterate)
+            """
+            raise NotImplementedError
 
-    def on_click(self, id: str):
+        return get_data
+
+    def on_click(self, id: str, state: Optional[State] = None):
         async def on_item_selected(
                 callback: CallbackQuery,
                 widget: Any,
@@ -87,6 +97,9 @@ class BaseListingWindow(Window):
         ) -> None:
             options = {f"{id}_obj_id": int(item_id)}
             dialog_manager.current_context().dialog_data.update(**options)
-            await dialog_manager.next()
+            if state is None:
+                await dialog_manager.next()
+            else:
+                await dialog_manager.switch_to(state)
 
         return on_item_selected
