@@ -1,3 +1,6 @@
-from . import user
-from . import book
-from . import default
+from . import book, user
+
+__all__ = [
+    "user",
+    "book",
+]

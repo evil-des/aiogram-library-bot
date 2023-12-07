@@ -1,8 +1,10 @@
+from typing import Any, Awaitable, Callable, Dict
+
 from aiocache import Cache
 from aiogram import BaseMiddleware
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Callable, Awaitable, Dict, Any
+
 from app.services.repo import Repo
 
 
@@ -13,10 +15,10 @@ class DatabaseMiddleware(BaseMiddleware):
         self.cache = cache
 
     async def __call__(
-            self,
-            handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-            event: Message,
-            data: Dict[str, Any]
+        self,
+        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        event: Message,
+        data: Dict[str, Any],
     ) -> Any:
         session: AsyncSession = self.async_session_maker()
         data["session"] = session

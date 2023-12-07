@@ -1,33 +1,25 @@
 from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery
-from aiogram_dialog import Window, DialogManager, StartMode
-from aiogram_dialog.widgets.kbd import Button, Row
+from aiogram_dialog import DialogManager, StartMode, Window
+from aiogram_dialog.widgets.kbd import Button
+from aiogram_dialog.widgets.text import Const
 
 from app.dialogs.common import CommonElements
-from app.models import Book, Genre, BookAdd
-from app.states.book import BookListing
-from aiogram_dialog.widgets.text import Jinja, Const
-from typing import Dict
-
 from app.services.repo import Repo
+from app.states.book import BookListing
 
 
 class BookDeleteWindow(Window):
-    def __init__(
-        self,
-        state: State
-    ) -> None:
+    def __init__(self, state: State) -> None:
         super().__init__(
             Const("Вы действительно хотите удалить эту книгу?"),
             self.get_book_delete_keyboard(self.delete_book),
-            state=state
+            state=state,
         )
 
     @staticmethod
     def get_book_delete_keyboard(on_confirm_click):
-        return CommonElements.confirm_n_cancel(
-            on_click=on_confirm_click
-        )
+        return CommonElements.confirm_n_cancel(on_click=on_confirm_click)
 
     @staticmethod
     async def delete_book(
@@ -43,6 +35,5 @@ class BookDeleteWindow(Window):
 
         await callback.answer("Книга успешно удалена 👍")
         await dialog_manager.start(
-            state=BookListing.all_books,
-            mode=StartMode.RESET_STACK
+            state=BookListing.all_books, mode=StartMode.RESET_STACK
         )

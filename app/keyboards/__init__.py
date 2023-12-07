@@ -1,3 +1,4 @@
-from . import default as default
-from . import inline as inline
+from . import default, inline
 from .menu import Menu
+
+__all__ = ["default", "inline", "Menu"]

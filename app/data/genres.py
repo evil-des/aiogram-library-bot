@@ -1,7 +1,4 @@
 from app.services.repo import Repo
-from app.models import Genre
-from sqlalchemy.exc import PendingRollbackError, IntegrityError
-
 
 GENRES = [
     {"name": "Деловая литература"},
@@ -27,20 +24,12 @@ GENRES = [
     {"name": "Фольклор"},
     {"name": "Юмор"},
     {"name": "Здоровье, красота, психология"},
-    {"name": "Зарубежная литература"}
+    {"name": "Зарубежная литература"},
 ]
 
 
-async def prepare_data():
-    async with async_session() as session:
-        for genre in GENRES:
-            db_genre = Genre(
-                name=genre.get("name"),
-                desc=genre.get("desc")
-            )
-            session.add(db_genre)
-
-        try:
-            await session.commit()
-        except IntegrityError or PendingRollbackError:
-            await session.rollback()
+async def prepare_db_data(repo: Repo):
+    for genre in GENRES:
+        await repo.genre_dao.create_genre_if_not_exist(
+            name=genre.get("name"), desc=genre.get("desc")
+        )

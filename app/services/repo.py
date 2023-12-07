@@ -1,10 +1,7 @@
+from aiocache import Cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.dao import (
-    UserDAO, GenreDAO, AuthorDAO, BookDAO
-)
-
-from aiocache import Cache
+from app.services.dao import AuthorDAO, BookDAO, GenreDAO, UserDAO
 
 
 class Repo:

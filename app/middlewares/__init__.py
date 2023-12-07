@@ -1,3 +1,9 @@
+from .database import DatabaseMiddleware
 from .logging import StructLoggingMiddleware
 from .user_object import UserObjectMiddleware
-from .database import DatabaseMiddleware
+
+__all__ = [
+    "StructLoggingMiddleware",
+    "UserObjectMiddleware",
+    "DatabaseMiddleware",
+]

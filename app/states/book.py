@@ -21,4 +21,5 @@ class BookListing(StatesGroup):
 
 class BookSearch(StatesGroup):
     query_input = State()
-    show_result = State()
+    result = State()
+    book_info = State()

@@ -1,34 +1,29 @@
 import asyncio
+from typing import Tuple
 
 import aiojobs
 import orjson
 import structlog
-from typing import List, Tuple
+from aiocache import Cache
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
-from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram_dialog import setup_dialogs
 from aiohttp import web
 from redis.asyncio import Redis
-
-from app import handlers, utils, web_handlers
-from app.middlewares import (
-    StructLoggingMiddleware,
-    # UserObjectMiddleware,
-    DatabaseMiddleware
-)
-
-from app.database.engine import get_async_session_maker, AsyncSession
-from app import dialogs
-
-from aiocache import Cache
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from app import dialogs, handlers, utils, web_handlers
+from app.database.engine import AsyncSession, get_async_session_maker
+from app.middlewares import (  # UserObjectMiddleware,
+    DatabaseMiddleware,
+    StructLoggingMiddleware,
+)
 from app.utils.get_settings import get_settings
 
 # DO NOT DELETE THIS LINE - it's needed for creating tables in DB
-from app.models import User, Book, Genre, Author
 
 
 settings = get_settings()
@@ -41,8 +36,6 @@ async def create_db_connections(dp: Dispatcher) -> Tuple[async_sessionmaker, Cac
     async_session_maker = get_async_session_maker(
         db_url=settings.SQLALCHEMY_DATABASE_URI
     )
-
-    # await genres.prepare_data()  # добавление заранее известных жанров
 
     if settings.DEBUG:
         cache = Cache(cache_class=Cache.MEMORY)
@@ -84,8 +77,8 @@ async def close_db_connections(dp: Dispatcher) -> None:
         session: AsyncSession = dp["session"]
         await session.close()
     if "cache" in dp.workflow_data:
-        cache: redis.asyncio.Redis = dp["cache"]  # type: ignore[type-arg]
-        await cache.close()
+        cache: Cache = dp["cache"]  # type: ignore[type-arg]
+        await cache.REDIS.close()
 
 
 def register_dialogs(dp: Dispatcher):
@@ -112,10 +105,7 @@ def setup_middlewares(dp: Dispatcher, async_session_maker, cache) -> None:
     dp.update.outer_middleware(StructLoggingMiddleware(logger=dp["aiogram_logger"]))
     # dp.update.middleware(DBSessionMiddleware(session_pool=async_session))
     dp.update.middleware(
-        DatabaseMiddleware(
-            async_session_maker=async_session_maker,
-            cache=cache
-        )
+        DatabaseMiddleware(async_session_maker=async_session_maker, cache=cache)
     )
     # dp.update.middleware(UserObjectMiddleware())
 

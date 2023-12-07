@@ -1,10 +1,13 @@
-from .base import BaseListingWindow
+from typing import List, Optional
+
 from aiogram.fsm.state import State
 from aiogram_dialog import DialogManager
-from app.services.repo import Repo
-from app.models import Genre
+
 from app.dialogs.common import CommonElements
-from typing import List, Any, Optional
+from app.models import Genre
+from app.services.repo import Repo
+
+from .base import BaseListingWindow
 
 
 class GenresWindow(BaseListingWindow):
@@ -16,7 +19,7 @@ class GenresWindow(BaseListingWindow):
             id="genres",
             state=state,
             elements=[CommonElements.cancel_btn()],
-            switch_to=switch_to
+            switch_to=switch_to,
         )
 
     def data_getter(self, **kwargs):
@@ -24,8 +27,6 @@ class GenresWindow(BaseListingWindow):
             repo: Repo = dialog_manager.middleware_data["repo"]
             genres: List[Genre] = await repo.genre_dao.get_genres()
 
-            return {
-                "items": genres,
-                "count": len(genres)
-            }
+            return {"items": genres, "count": len(genres)}
+
         return get_data

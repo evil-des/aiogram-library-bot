@@ -1,15 +1,16 @@
-from secrets import token_hex
-from typing import Optional, Dict, Any, List
+from typing import Any, Optional
 
+from pydantic import Field, field_validator, PostgresDsn, RedisDsn, ValidationInfo
 from pydantic_settings import BaseSettings
-from pydantic import Field, PostgresDsn, field_validator, RedisDsn, ValidationInfo
 
 
 class DefaultSettings(BaseSettings):
     VERSION: str = "1.0.0"
 
     DEBUG: bool = Field(default=False)
-    LOGGING_LEVEL: int = Field(default=20)  # read here - https://docs.python.org/3/library/logging.html#levels
+    LOGGING_LEVEL: int = Field(
+        default=20
+    )  # read here - https://docs.python.org/3/library/logging.html#levels
 
     @field_validator("LOGGING_LEVEL", mode="before")
     def set_logging_leve(cls, v: Optional[int], info: ValidationInfo):

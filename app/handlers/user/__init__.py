@@ -1,4 +1,5 @@
-from aiogram import Router, F
+from aiogram import Router
+
 from . import start
 
 

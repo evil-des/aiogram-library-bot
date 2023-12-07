@@ -1,7 +1,6 @@
-from aiogram import Router, F
-from . import add
-from . import show
-from . import search
+from aiogram import Router
+
+from . import add, search, show
 
 
 def prepare_router() -> Router:

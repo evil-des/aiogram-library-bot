@@ -1,9 +1,12 @@
+from pydantic import PostgresDsn
 from sqlalchemy.ext.asyncio import (
-    create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
+    async_sessionmaker,
+    AsyncEngine,
+    AsyncSession,
+    create_async_engine,
 )
 from sqlalchemy.pool import QueuePool
 from sqlmodel import SQLModel
-from pydantic import PostgresDsn
 
 
 def get_engine(db_url: str) -> AsyncEngine:
