@@ -46,3 +46,4 @@ class BookAdd(BookBase):
 
 class BookFilter(SQLModel):
     IS_GENRE_FILTER: bool = False
+    IS_KEY_WORD_FILTER: bool = False

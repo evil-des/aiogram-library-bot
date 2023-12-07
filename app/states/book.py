@@ -17,3 +17,8 @@ class BookListing(StatesGroup):
 
     book_info = State()
     delete_book = State()
+
+
+class BookSearch(StatesGroup):
+    query_input = State()
+    show_result = State()

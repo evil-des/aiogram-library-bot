@@ -92,7 +92,8 @@ def register_dialogs(dp: Dispatcher):
     all_dialogs = [
         dialogs.start_message.dialog,
         dialogs.add_books.dialog,
-        dialogs.show_books.dialog
+        dialogs.show_books.dialog,
+        dialogs.search_books.dialog,
     ]
     for dialog in all_dialogs:
         dp.include_router(dialog)

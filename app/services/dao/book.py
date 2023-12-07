@@ -1,11 +1,11 @@
 from typing import Optional, List
 
-from sqlalchemy import delete
+from sqlalchemy import delete, func
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload, join
+from sqlmodel import or_, col, and_
 
 from app.models import (
-    User, Book, Genre
+    User, Book, Genre, Author
 )
 from app.services.dao.base import DAO
 
@@ -18,10 +18,26 @@ class BookDAO(DAO):
         )
         return (await self.session.execute(q)).scalar()
 
-    async def get_books(self, ids: List[int] | None = None) -> Optional[List[Book]]:
+    async def get_books(
+        self,
+        ids: List[int] | None = None,
+        key_word: str = None
+    ) -> Optional[List[Book]]:
         q = select(Book)
         if ids is not None:
             q.filter(Book.id.in_(ids))
+
+        if key_word is not None:
+            key_word = key_word.lower()
+            q = select(Book).join(
+                Author, onclause=Author.id == Book.author_id
+            ).where(
+                or_(
+                    col(Book.name).ilike("%" + key_word + "%+"),
+                    col(Author.full_name).ilike("%" + key_word + "%"),
+                )
+            )
+
         return (await self.session.execute(q)).scalars().all()
 
     async def delete_book(self, id: int) -> None:
