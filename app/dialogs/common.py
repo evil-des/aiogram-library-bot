@@ -32,6 +32,22 @@ class CommonElements:
         return Back(Const("🔙 Назад"))
 
     @staticmethod
+    def add_btn(on_click) -> Button:
+        return Button(
+            Const("✅ Добавить"),
+            id="add",
+            on_click=on_click
+        )
+
+    @staticmethod
+    def delete_btn(on_click) -> Button:
+        return Button(
+            Const("❌ Удалить"),
+            id="delete",
+            on_click=on_click
+        )
+
+    @staticmethod
     def cancel_btn() -> Cancel:
         return Cancel(
             Const("❌ Отмена"),
@@ -44,14 +60,6 @@ class CommonElements:
         return Row(
             CommonElements.back_btn(),
             CommonElements.cancel_btn()
-        )
-
-    @staticmethod
-    def delete_btn(on_click) -> Button:
-        return Button(
-            Const("❌ Удалить"),
-            id="delete",
-            on_click=on_click
         )
 
     @staticmethod
@@ -79,9 +87,9 @@ class CommonElements:
 
         if skip and buttons is not None:
             buttons = Group(*buttons, width=2)
-            return Window(*base, buttons, skip_btn, state=state)
+            return Window(skip_btn, *base, buttons, state=state)
         elif skip:
-            return Window(*base, skip_btn, state=state)
+            return Window(skip_btn, *base, state=state)
 
         if buttons is not None:
             buttons = Group(*buttons, width=2)

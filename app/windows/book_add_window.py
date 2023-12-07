@@ -40,8 +40,8 @@ class BookConfirmWindow(Window):
     @staticmethod
     def get_book_add_keyboard(on_add_click):
         return Row(
-            Button(Const("Добавить"), id="add_book", on_click=on_add_click),
-            Button(Const("Отменить"), id="cancel", on_click=CommonElements.on_cancel_click),
+            CommonElements.add_btn(on_add_click),
+            CommonElements.cancel_btn(),
         )
 
     @staticmethod

@@ -27,8 +27,8 @@ class BookInfoWindow(Window):
     @staticmethod
     def get_book_info_keyboard():
         return Group(
-            CommonElements.delete_btn(on_click=None),
             CommonElements.back_btn(),
+            CommonElements.delete_btn(on_click=None),
             width=2
         )
 
