@@ -23,6 +23,9 @@ from app.middlewares import (  # UserObjectMiddleware,
 )
 from app.utils.get_settings import get_settings
 
+from app.services.repo import Repo
+from app.data.genres import prepare_db_data
+
 # DO NOT DELETE THIS LINE - it's needed for creating tables in DB
 
 
@@ -36,6 +39,7 @@ async def create_db_connections(dp: Dispatcher) -> Tuple[async_sessionmaker, Cac
     async_session_maker = get_async_session_maker(
         db_url=settings.SQLALCHEMY_DATABASE_URI
     )
+    # await prepare_db_data(Repo(async_session_maker()))  # заполнить базу данных жанрами
 
     if settings.DEBUG:
         cache = Cache(cache_class=Cache.MEMORY)

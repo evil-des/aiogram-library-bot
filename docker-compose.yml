@@ -5,14 +5,12 @@ services:
     container_name: library-bot
     image: aiogram-library-bot
     env_file:
-      - .env
+      - .env.docker
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
       - ./:/src
-    ports:
-      - "8000:8000"
     depends_on:
       - app_db
 

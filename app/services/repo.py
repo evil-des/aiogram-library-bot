@@ -5,7 +5,7 @@ from app.services.dao import AuthorDAO, BookDAO, GenreDAO, UserDAO
 
 
 class Repo:
-    def __init__(self, session: AsyncSession, cache: Cache):
+    def __init__(self, session: AsyncSession, cache: Cache = None):
         self.session = session
         self.user_dao = UserDAO(session=session)
         self.genre_dao = GenreDAO(session=session)

@@ -1,26 +1,46 @@
-FROM python:3.10.9-slim-buster
+FROM python:3.10 as python-base
 
-RUN apt-get update && \
-    apt-get install -y gcc libpq-dev && \
-    apt clean && \
-    rm -rf /var/cache/apt/*
+# https://python-poetry.org/docs#ci-recommendations
+#ENV POETRY_VERSION=1.2.0
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VENV=/opt/poetry-venv
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONIOENCODING=utf-8
+# Tell Poetry where to place its cache and virtual environment
+ENV POETRY_CACHE_DIR=/opt/.cache
 
-COPY requirements/ /tmp/requirements
+# Create stage for Poetry installation
+FROM python-base as poetry-base
 
-RUN pip install -U pip && \
-    pip install --no-cache-dir -r /tmp/requirements/dev.txt
+# Creating a virtual environment just for poetry and install it with pip
+RUN python3 -m venv $POETRY_VENV \
+	&& $POETRY_VENV/bin/pip install -U pip setuptools \
+	&& $POETRY_VENV/bin/pip install poetry
 
-COPY . /src
-ENV PATH "$PATH:/src/scripts"
+# Create a new stage from the base python image
+FROM python-base as app
 
-RUN useradd -m -d /src -s /bin/bash app \
-    && chown -R app:app /src/* && chmod +x /src/scripts/*
+# Copy Poetry to app image
+COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
+
+# Add Poetry to PATH
+ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR /src
-USER app
 
-CMD ["./scripts/start-dev.sh"]
+# Copy Dependencies
+COPY . ./
+
+# [OPTIONAL] Validate the project is properly configured
+RUN poetry check
+
+# Install Dependencies
+RUN poetry install --no-interaction --no-cache --without dev
+
+#ENV PATH "$PATH:/app/scripts"
+
+#RUN useradd -m -d /app -s /bin/bash app \
+#    && chown -R app:app /app/* && chmod +x /app/scripts/*
+#
+#USER app
+
+CMD ["./scripts/start-prod.sh"]
