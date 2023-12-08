@@ -26,9 +26,6 @@ from app.utils.get_settings import get_settings
 from app.services.repo import Repo
 from app.data.genres import prepare_db_data
 
-# DO NOT DELETE THIS LINE - it's needed for creating tables in DB
-
-
 settings = get_settings()
 
 
